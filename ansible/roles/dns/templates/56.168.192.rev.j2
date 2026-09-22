@@ -1,0 +1,12 @@
+$TTL 86400
+@   IN SOA  ns01.lab.local. admin.lab.local. (
+                {{ ansible_date_time.date | replace('-','') }}01
+                3600
+                1800
+                604800
+                86400 )
+@       IN NS   ns01.lab.local.
+11      IN PTR  ns01.lab.local.
+12      IN PTR  web01.lab.local.
+13      IN PTR  db01.lab.local.
+14      IN PTR  client01.lab.local.

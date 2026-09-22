@@ -1,0 +1,64 @@
+---
+# dns01: BIND9(정방향/역방향 존) + chrony(NTP) 구성
+- name: BIND, chrony 패키지 설치
+  ansible.builtin.dnf:
+    name:
+      - bind
+      - bind-utils
+      - chrony
+    state: present
+
+- name: named.conf 배포
+  ansible.builtin.template:
+    src: named.conf.j2
+    dest: /etc/named.conf
+    owner: root
+    group: named
+    mode: "0640"
+  notify: named 재시작
+
+- name: 정방향 존 파일 배포 (lab.local.zone)
+  ansible.builtin.template:
+    src: lab.local.zone.j2
+    dest: /var/named/lab.local.zone
+    owner: root
+    group: named
+    mode: "0640"
+  notify: named 재시작
+
+- name: 역방향 존 파일 배포 (56.168.192.rev)
+  ansible.builtin.template:
+    src: 56.168.192.rev.j2
+    dest: /var/named/56.168.192.rev
+    owner: root
+    group: named
+    mode: "0640"
+  notify: named 재시작
+
+- name: chrony.conf에 내부망 허용 및 로컬 stratum 추가
+  ansible.builtin.blockinfile:
+    path: /etc/chrony.conf
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - lab internal ntp"
+    block: |
+      allow 192.168.56.0/24
+      local stratum 10
+  notify: chronyd 재시작
+
+- name: named, chronyd 서비스 시작 및 활성화
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: started
+    enabled: true
+  loop:
+    - named
+    - chronyd
+
+- name: 방화벽에 dns, ntp 서비스 허용
+  ansible.posix.firewalld:
+    service: "{{ item }}"
+    permanent: true
+    immediate: true
+    state: enabled
+  loop:
+    - dns
+    - ntp

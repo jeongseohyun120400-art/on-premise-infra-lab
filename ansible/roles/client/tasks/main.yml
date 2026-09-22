@@ -1,0 +1,7 @@
+---
+- name: 테스트용 클라이언트 도구 설치 (DNS/DB 확인용)
+  ansible.builtin.dnf:
+    name:
+      - bind-utils
+      - mariadb
+    state: present

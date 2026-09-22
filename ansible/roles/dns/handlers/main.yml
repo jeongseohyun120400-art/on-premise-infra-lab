@@ -1,0 +1,10 @@
+---
+- name: named 재시작
+  ansible.builtin.systemd:
+    name: named
+    state: restarted
+
+- name: chronyd 재시작
+  ansible.builtin.systemd:
+    name: chronyd
+    state: restarted

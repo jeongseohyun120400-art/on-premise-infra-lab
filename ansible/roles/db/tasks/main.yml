@@ -1,0 +1,57 @@
+---
+# db01: MariaDB 설치, mysql_secure_installation에 준하는 기본 보안 설정,
+# web01에서 접속할 원격 계정 생성
+- name: MariaDB 및 PyMySQL 설치
+  ansible.builtin.dnf:
+    name:
+      - mariadb-server
+      - python3-PyMySQL
+    state: present
+
+- name: MariaDB 서비스 시작 및 활성화
+  ansible.builtin.systemd:
+    name: mariadb
+    state: started
+    enabled: true
+
+- name: root 비밀번호 설정
+  community.mysql.mysql_user:
+    name: root
+    password: "{{ mysql_root_password }}"
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    login_unix_socket: /var/lib/mysql/mysql.sock
+    check_implicit_admin: true
+  no_log: true
+
+- name: 익명 사용자 삭제
+  community.mysql.mysql_user:
+    name: ""
+    host_all: true
+    state: absent
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+
+- name: test 데이터베이스 삭제
+  community.mysql.mysql_db:
+    name: test
+    state: absent
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+
+- name: 내부망(192.168.56.0/24)에서 접속 가능한 애플리케이션 계정 생성
+  community.mysql.mysql_user:
+    name: "{{ db_app_user }}"
+    password: "{{ db_app_password }}"
+    host: "192.168.56.%"
+    priv: "*.*:ALL"
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+  no_log: true
+
+- name: 방화벽에 mysql 서비스 허용
+  ansible.posix.firewalld:
+    service: mysql
+    permanent: true
+    immediate: true
+    state: enabled

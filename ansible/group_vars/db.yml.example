@@ -1,0 +1,7 @@
+# 이 파일을 group_vars/db.yml 로 복사한 뒤 실제 값으로 바꿔서 사용하세요.
+# db.yml은 .gitignore에 등록되어 있어 커밋되지 않습니다.
+# 여러 명이 협업한다면 아래처럼 vault로 암호화해서 커밋하는 것도 방법입니다.
+#   ansible-vault encrypt group_vars/db.yml
+mysql_root_password: "ChangeMe_Root!"
+db_app_user: "testuser"
+db_app_password: "ChangeMe_App!"

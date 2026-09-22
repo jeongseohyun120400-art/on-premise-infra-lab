@@ -1,0 +1,51 @@
+// Ansible로 관리됨 - 수동 수정 금지
+options {
+    listen-on port 53 { 127.0.0.1; 192.168.56.11; };
+    listen-on-v6 port 53 { ::1; };
+    directory       "/var/named";
+    dump-file       "/var/named/data/cache_dump.db";
+    statistics-file "/var/named/data/named_stats.txt";
+    memstatistics-file "/var/named/data/named_mem_stats.txt";
+    secroots-file   "/var/named/data/named.secroots";
+    recursing-file  "/var/named/data/named.recursing";
+    allow-query     { localhost; 192.168.56.0/24; };
+
+    recursion yes;
+
+    dnssec-validation yes;
+
+    managed-keys-directory "/var/named/dynamic";
+    geoip-directory "/usr/share/GeoIP";
+
+    pid-file "/run/named/named.pid";
+    session-keyfile "/run/named/session.key";
+
+    include "/etc/crypto-policies/back-ends/bind.config";
+};
+
+logging {
+    channel default_debug {
+        file "data/named.run";
+        severity dynamic;
+    };
+};
+
+zone "." IN {
+    type hint;
+    file "named.ca";
+};
+
+zone "lab.local" IN {
+    type master;
+    file "lab.local.zone";
+    allow-update { none; };
+};
+
+zone "56.168.192.in-addr.arpa" IN {
+    type master;
+    file "56.168.192.rev";
+    allow-update { none; };
+};
+
+include "/etc/named.rfc1912.zones";
+include "/etc/named.root.key";

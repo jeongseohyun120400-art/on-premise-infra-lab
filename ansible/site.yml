@@ -1,0 +1,31 @@
+---
+# 전체 랩 인프라 프로비저닝 진입점
+- name: 공통 기본 설정 (모든 서버)
+  hosts: lab
+  become: true
+  roles:
+    - common
+
+- name: DNS/NTP 서버 구성
+  hosts: dns
+  become: true
+  roles:
+    - dns
+
+- name: 웹 서버 구성
+  hosts: web
+  become: true
+  roles:
+    - web
+
+- name: DB 서버 구성
+  hosts: db
+  become: true
+  roles:
+    - db
+
+- name: 클라이언트 구성
+  hosts: client
+  become: true
+  roles:
+    - client

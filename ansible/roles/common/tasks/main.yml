@@ -1,0 +1,37 @@
+---
+# 모든 서버 공통 설정: 패키지 갱신, 내부 DNS 지정, 방화벽, 타임존
+- name: dnf 패키지 전체 업데이트
+  ansible.builtin.dnf:
+    name: "*"
+    state: latest
+    update_cache: true
+  register: dnf_update_result
+
+- name: NetworkManager 패키지가 갱신된 경우 서비스 재시작 (nmcli-daemon 버전 불일치 방지)
+  ansible.builtin.systemd:
+    name: NetworkManager
+    state: restarted
+  when: dnf_update_result.changed
+
+- name: 내부 DNS 서버(dns01)를 nameserver로 지정
+  ansible.builtin.nmcli:
+    conn_name: "{{ ansible_default_ipv4.interface | default('eth1') }}"
+    type: ethernet
+    dns4: "192.168.56.11"
+    state: present
+  when: inventory_hostname != "dns01"
+  register: dns_result
+
+- name: 변경된 DNS 설정을 즉시 반영 (연결 재적용)
+  ansible.builtin.command: "nmcli device reapply {{ ansible_default_ipv4.interface | default('eth1') }}"
+  when: dns_result is changed
+
+- name: firewalld 실행 확인
+  ansible.builtin.systemd:
+    name: firewalld
+    state: started
+    enabled: true
+
+- name: 타임존을 Asia/Seoul로 설정
+  community.general.timezone:
+    name: Asia/Seoul
