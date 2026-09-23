@@ -1,0 +1,85 @@
+---
+- name: Docker 저장소 관리 플러그인 설치
+  ansible.builtin.dnf:
+    name: dnf-plugins-core
+    state: present
+
+- name: Docker CE 공식 저장소 추가
+  ansible.builtin.command: dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+  args:
+    creates: /etc/yum.repos.d/docker-ce.repo
+
+- name: Docker 설치
+  ansible.builtin.dnf:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-compose-plugin
+    state: present
+
+- name: Docker 서비스 시작 및 활성화
+  ansible.builtin.systemd:
+    name: docker
+    state: started
+    enabled: true
+
+- name: 모니터링 배포 디렉터리 생성
+  ansible.builtin.file:
+    path: /opt/monitoring
+    state: directory
+    mode: "0755"
+
+- name: prometheus.yml 배포
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: /opt/monitoring/prometheus.yml
+    mode: "0644"
+  register: prom_config
+
+- name: blackbox.yml 배포
+  ansible.builtin.template:
+    src: blackbox.yml.j2
+    dest: /opt/monitoring/blackbox.yml
+    mode: '0644'
+  register: blackbox_config
+
+- name: docker-compose.yml 배포
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: /opt/monitoring/docker-compose.yml
+    mode: "0644"
+  register: compose_file
+
+- name: 모니터링 스택 기동 (Prometheus + Grafana)
+  ansible.builtin.command: docker compose up -d
+  args:
+    chdir: /opt/monitoring
+  changed_when: false
+
+- name: 설정 변경 시 컨테이너 재시작
+  ansible.builtin.command: docker compose restart
+  args:
+    chdir: /opt/monitoring
+  when: prom_config.changed or compose_file.changed or blackbox_config.changed
+
+- name: 방화벽에 Prometheus 포트(9090) 허용
+  ansible.posix.firewalld:
+    port: 9090/tcp
+    permanent: true
+    immediate: true
+    state: enabled
+
+- name: 방화벽에 Grafana 포트(3000) 허용
+  ansible.posix.firewalld:
+    port: 3000/tcp
+    permanent: true
+    immediate: true
+    state: enabled
+
+- name: 방화벽에 Blackbox Exporter 포트(9115) 허용
+  ansible.posix.firewalld:
+    port: 9115/tcp
+    permanent: true
+    immediate: true
+    state: enabled

@@ -1,0 +1,7 @@
+---
+monitored_hosts:
+  - dns01
+  - web01
+  - db01
+  - client01
+  - monitor01

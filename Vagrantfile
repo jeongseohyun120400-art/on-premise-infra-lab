@@ -22,6 +22,7 @@ VMS = {
   "web01"    => { ip: "192.168.56.12", mem: 1024, cpu: 1, role: "web" },
   "db01"     => { ip: "192.168.56.13", mem: 1536, cpu: 1, role: "db" },
   "client01" => { ip: "192.168.56.14", mem: 1024, cpu: 1, role: "client" },
+  "monitor01" => { ip: "192.168.56.15", mem: 768, cpu: 1, role: "monitor" },
 }
 
 Vagrant.configure("2") do |config|
@@ -41,7 +42,11 @@ Vagrant.configure("2") do |config|
 
       # dnf로 ansible-core를 먼저 설치 (pip 컴파일보다 훨씬 빠르고 안정적)
       node.vm.provision "shell", inline: <<-SHELL
-        dnf install -y ansible-core
+        for i in $(seq 1 15); do
+          dnf install -y ansible-core && break
+          echo "네트워크/DNS 준비 대기 중... ($i/15)"
+          sleep 2
+        done
       SHELL
 
       # /vagrant 공유폴더에 의존하지 않고, ansible/ 디렉토리를 SSH로 직접 업로드

@@ -2,3 +2,5 @@
 *.log
 *.retry
 ansible/group_vars/db.yml
+
+ansible/group_vars/monitor.yml

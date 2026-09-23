@@ -29,3 +29,16 @@
   become: true
   roles:
     - client
+
+- name: 공통 기본 설정 (모든 서버)
+  hosts: lab
+  become: true
+  roles:
+    - common
+    - node_exporter   # 이 줄 추가
+
+- name: 모니터링 서버 구성          # 파일 맨 끝에 추가
+  hosts: monitor
+  become: true
+  roles:
+    - monitor

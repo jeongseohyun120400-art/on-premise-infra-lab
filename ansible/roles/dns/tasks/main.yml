@@ -8,6 +8,13 @@
       - chrony
     state: present
 
+- name: named를 IPv4 전용으로 강제 실행 (VMware NAT의 IPv6 미지원으로 인한 간헐적 SERVFAIL 방지)
+  ansible.builtin.lineinfile:
+    path: /etc/sysconfig/named
+    regexp: '^OPTIONS='
+    line: 'OPTIONS="-4"'
+  notify: named 재시작
+
 - name: named.conf 배포
   ansible.builtin.template:
     src: named.conf.j2

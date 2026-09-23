@@ -1,0 +1,65 @@
+---
+- name: node_exporter 전용 시스템 계정 생성
+  ansible.builtin.user:
+    name: node_exporter
+    system: true
+    shell: /sbin/nologin
+    create_home: false
+
+- name: node_exporter 바이너리 존재 확인
+  ansible.builtin.stat:
+    path: /usr/local/bin/node_exporter
+  register: node_exporter_bin
+
+- name: node_exporter 다운로드 및 압축 해제
+  ansible.builtin.unarchive:
+    src: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
+    dest: /tmp
+    remote_src: true
+  when: not node_exporter_bin.stat.exists
+
+- name: node_exporter 바이너리를 /usr/local/bin으로 배치
+  ansible.builtin.copy:
+    src: "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64/node_exporter"
+    dest: /usr/local/bin/node_exporter
+    owner: node_exporter
+    group: node_exporter
+    mode: "0755"
+    remote_src: true
+  when: not node_exporter_bin.stat.exists
+
+- name: node_exporter systemd 유닛 배포
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/node_exporter.service
+    content: |
+      [Unit]
+      Description=Prometheus Node Exporter
+      After=network.target
+
+      [Service]
+      User=node_exporter
+      Group=node_exporter
+      ExecStart=/usr/local/bin/node_exporter
+
+      [Install]
+      WantedBy=multi-user.target
+    mode: "0644"
+  register: node_exporter_unit
+
+- name: systemd 유닛 변경 시 데몬 재로드
+  ansible.builtin.systemd:
+    daemon_reload: true
+  when: node_exporter_unit.changed
+
+- name: node_exporter 서비스 시작 및 활성화
+  ansible.builtin.systemd:
+    name: node_exporter
+    state: started
+    enabled: true
+
+- name: 방화벽에 node_exporter 포트(9100) 허용
+  ansible.posix.firewalld:
+    port: 9100/tcp
+    permanent: true
+    immediate: true
+    state: enabled

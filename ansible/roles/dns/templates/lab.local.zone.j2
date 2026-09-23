@@ -5,8 +5,9 @@ $TTL 86400
                 1800       ; retry
                 604800     ; expire
                 86400 )    ; minimum
-@       IN NS   ns01.lab.local.
-ns01    IN A    192.168.56.11
+@    IN NS    dns01.lab.local.
+dns01      IN  A   192.168.56.11
 web01   IN A    192.168.56.12
 db01    IN A    192.168.56.13
 client01 IN A   192.168.56.14
+monitor01  IN  A   192.168.56.15

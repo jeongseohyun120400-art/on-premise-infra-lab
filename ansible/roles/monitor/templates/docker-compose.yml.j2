@@ -1,0 +1,42 @@
+services:
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: prometheus
+    restart: unless-stopped
+    dns:
+      - 192.168.56.11
+      - 192.168.115.2
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: grafana
+    restart: unless-stopped
+    dns:
+      - 192.168.56.11
+      - 192.168.115.2
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD={{ grafana_admin_password }}
+    volumes:
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+
+  blackbox_exporter:
+    image: prom/blackbox-exporter:v0.25.0
+    container_name: blackbox_exporter
+    restart: unless-stopped
+    volumes:
+      - /opt/monitoring/blackbox.yml:/etc/blackbox_exporter/config.yml
+    dns:
+      - 192.168.56.11
+    ports:
+      - "9115:9115"
+
+volumes:
+  prometheus_data:
+  grafana_data:

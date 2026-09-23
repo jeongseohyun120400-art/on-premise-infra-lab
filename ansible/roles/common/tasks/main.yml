@@ -6,6 +6,9 @@
     state: latest
     update_cache: true
   register: dnf_update_result
+  retries: 5
+  delay: 10
+  until: dnf_update_result is succeeded
 
 - name: NetworkManager 패키지가 갱신된 경우 서비스 재시작 (nmcli-daemon 버전 불일치 방지)
   ansible.builtin.systemd:
